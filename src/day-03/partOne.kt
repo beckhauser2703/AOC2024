@@ -24,6 +24,7 @@ enum class Token(val code: Char?) {
 }
 
 enum class State {
+    INITIAL_STATE,
     BUILDING_FIRST_WORD,
     BUILDING_FIRST_DIGIT,
     BUILDING_SECOND_DIGIT,
@@ -41,15 +42,16 @@ class StateMachine() {
     fun nextState(char: Char) {
         if (char == 'm') {
             curToken = Token.M
+            curState = State.BUILDING_FIRST_WORD
             resetVals()
         }
 
         else if (Token.fromChar(char) == null && !char.isDigit()) {
             curToken = Token.RPAREN
-            resetVals()
+            resetValsAndState()
         }
 
-        else if (char in firstWordArray) {
+        else if (char in firstWordArray && curState == State.BUILDING_FIRST_WORD) {
             if (curToken.ordinal + 1 == Token.fromChar(char)!!.ordinal) {
                 curToken = Token.fromChar(char)!!
                 if ((curToken) == Token.LPAREN) {
@@ -63,36 +65,45 @@ class StateMachine() {
                 curState = State.BUILDING_SECOND_DIGIT
                 curToken = Token.COMMA
             }
+            else {
+                resetValsAndState()
+            }
         }
 
         else if (char.isDigit()) {
             when (curState) {
-                State.BUILDING_FIRST_WORD -> resetVals()
+                State.BUILDING_FIRST_WORD -> resetValsAndState()
                 State.BUILDING_FIRST_DIGIT -> firstVal += char
                 State.BUILDING_SECOND_DIGIT -> secondVal += char
-                State.TERMINAL_STATE -> resetVals()
+                State.TERMINAL_STATE -> resetValsAndState()
+                State.INITIAL_STATE -> {}
             }
         }
 
         else if (char == ')') {
             when (curState) {
-                State.BUILDING_FIRST_WORD -> resetVals()
-                State.BUILDING_FIRST_DIGIT -> resetVals()
+                State.BUILDING_FIRST_WORD -> resetValsAndState()
+                State.BUILDING_FIRST_DIGIT -> resetValsAndState()
                 State.BUILDING_SECOND_DIGIT -> curState = State.TERMINAL_STATE
-                State.TERMINAL_STATE -> resetVals()
+                State.TERMINAL_STATE -> resetValsAndState()
+                State.INITIAL_STATE -> {}
             }
         }
     }
 
     private fun resetVals() {
-        curState = State.BUILDING_FIRST_WORD;
         firstVal = "";
         secondVal = "";
+    }
+
+    private fun resetValsAndState() {
+        resetVals()
+        curState = State.INITIAL_STATE
     }
 }
 
 fun main() {
-    val preprocessedInput = File("src/day-03/input.txt")
+    val preprocessedInput = File("src/day-03/example_input.txt")
         .readText()
 
     var result = 0;
