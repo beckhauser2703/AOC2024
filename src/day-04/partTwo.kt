@@ -1,4 +1,4 @@
-package `day-04`
+package `day-04-part-2`
 
 import java.io.File
 import java.util.Vector
@@ -19,28 +19,33 @@ operator fun NamedPair<Int>.times(scalar: Int): NamedPair<Int> {
     return NamedPair(this.row * scalar, this.col * scalar)
 }
 
-fun lookAroundXLetter(grid: Grid, letterXPosition: NamedPair<Int>): Int {
-    var directions = ((-1..1)
-        .flatMap { r ->
-            (-1..1)
-                .map { c -> NamedPair(r, c) }
-        })
+fun lookAroundALetter(grid: Grid, letterAPosition: NamedPair<Int>): Int {
 
-    return directions
-        .count {
-            lookDirectionFromXLetter(grid, letterXPosition, it)
-        }
-}
+    var downLeftDirection = NamedPair(-1, -1)
+    var upLeftDirection = NamedPair(-1, +1)
+    var downRightDirection = NamedPair(+1, -1)
+    var upRightDirection = NamedPair(+1, +1)
 
-fun lookDirectionFromXLetter(grid: Grid, letterXPosition: NamedPair<Int>, direction: NamedPair<Int>): Boolean {
-    if (!onGrid(grid, letterXPosition + (direction * 3))) {
-        return false
+    var directions = listOf(
+        downRightDirection,
+        downLeftDirection,
+        upRightDirection,
+        upLeftDirection
+    )
+
+    if (directions.map{ it + letterAPosition }.any { !onGrid(grid, it) }) {
+        return 0
     }
 
-    val isM = grid[letterXPosition + direction] == 'M'
-    val isA = grid[letterXPosition + direction * 2] == 'A'
-    val isS = grid[letterXPosition + direction * 3] == 'S'
-    return isM && isA && isS
+    if (setOf(grid[letterAPosition + upLeftDirection], grid[letterAPosition + downRightDirection]) != setOf('S', 'M')) {
+        return 0
+    }
+
+    if (setOf(grid[letterAPosition + upRightDirection], grid[letterAPosition + downLeftDirection]) != setOf('S', 'M')) {
+        return 0
+    }
+
+    return 1
 }
 
 fun onGrid(grid: Grid, position: NamedPair<Int>): Boolean {
@@ -62,8 +67,8 @@ fun main() {
     grid
         .forEachIndexed { r, line ->
             line.forEachIndexed() { c, char ->
-                if (char == 'X') {
-                    result += lookAroundXLetter(grid, NamedPair(r, c))
+                if (char == 'A') {
+                    result += lookAroundALetter(grid, NamedPair(r, c))
                 }
             }
         }
@@ -71,8 +76,8 @@ fun main() {
     //same thing as result but it looks cute
     val foldResult = grid.foldIndexed(0) { r, acc, lst ->
         acc + lst.foldIndexed(0) { c, innerAcc, char ->
-            if (char == 'X') {
-                innerAcc + lookAroundXLetter(grid, NamedPair(r, c))
+            if (char == 'A') {
+                innerAcc + lookAroundALetter(grid, NamedPair(r, c))
             } else {
                 innerAcc
             }
